@@ -1,0 +1,31 @@
+#!/bin/bash --login
+# merge per-genome prokka .faa files into per-domain inputs for eggnog-mapper
+# headers get prepended with sample id so proteins trace back to their genome
+#SBATCH -p multicore
+#SBATCH -n 2
+#SBATCH -t 5:00:00
+#SBATCH -J eggnog_input_merger
+#SBATCH -o logs/eggnog_input_merger_%j.out
+#SBATCH -e logs/eggnog_input_merger_%j.err
+
+set -euo pipefail
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../config.sh"
+
+INPUT_DIR="${EGGNOG_DIR}/input"
+mkdir -p "${INPUT_DIR}"
+
+BACTERIA="${INPUT_DIR}/bacteria_merged.faa"
+: > "${BACTERIA}"
+for faa in "${PROKKA_CTRL_OUT}"/*/*.faa; do
+    sample=$(basename "$(dirname "${faa}")")
+    awk -v s="${sample}" '/^>/{print ">" s "_" substr($0,2)} !/^>/{print}' "${faa}" >> "${BACTERIA}"
+done
+echo "bacteria: $(grep -c "^>" "${BACTERIA}") sequences"
+
+ARCHAEA="${INPUT_DIR}/archaea_merged.faa"
+: > "${ARCHAEA}"
+for faa in "${PROKKA_OUT}"/*/*.faa; do
+    sample=$(basename "$(dirname "${faa}")")
+    awk -v s="${sample}" '/^>/{print ">" s "_" substr($0,2)} !/^>/{print}' "${faa}" >> "${ARCHAEA}"
+done
+echo "archaea: $(grep -c "^>" "${ARCHAEA}") sequences"

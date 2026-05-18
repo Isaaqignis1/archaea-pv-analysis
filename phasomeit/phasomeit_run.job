@@ -1,0 +1,37 @@
+#!/bin/bash --login
+# phasomeit array runner, one task per genus dir listed in $LIST
+# cutoffs from the original phasomeit paper: mono>=7, di>=6, tri excluded, tetra+ >=5
+#SBATCH -p multicore
+#SBATCH -n 2
+#SBATCH -c 8
+#SBATCH -a 1-18%9
+#SBATCH -t 4:00:00
+#SBATCH -J phasomeit_array
+#SBATCH -o logs/phasomeit_array_%A_%a.out
+#SBATCH -e logs/phasomeit_array_%A_%a.err
+
+set -euo pipefail
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../config.sh"
+
+module purge
+module load "${CONDA_MODULE}"
+
+PY="${CONDA_ENVS_DIR}/${ENV_PHASOMEIT}/bin/python"
+: "${LIST:?set LIST=/path/to/genus_dirs.txt via --export=ALL,LIST=...}"
+
+TARGET=$(awk "NR==${SLURM_ARRAY_TASK_ID}" "${LIST}")
+GENUS=$(basename "${TARGET}")
+
+echo "task ${SLURM_ARRAY_TASK_ID}  genus ${GENUS}"
+"${PY}" -c "import Bio; print('biopython', Bio.__version__)"
+
+cd "${PHASOMEIT_REPO}"
+chmod +x "${PHASOMEIT_REPO}/bossref" || true
+export PATH="$(dirname "${PY}"):${PATH}"
+
+if [[ -d "${TARGET}/summary_tracts" ]]; then
+  echo "skip ${GENUS}, summary_tracts exists"
+  exit 0
+fi
+
+"${PY}" phasomeit.py -t "${TARGET}" -c 7 6 0 5 5

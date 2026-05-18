@@ -1,0 +1,29 @@
+# copy to config.sh and fill in. the .job files in this repo source it from the repo root
+
+# slurm
+export CONDA_MODULE="apps/binapps/conda/miniforge3/25.9.1"   # blank if conda is already on PATH
+
+# roots
+export CONDA_ENVS_DIR="${HOME}/.conda/envs"
+
+# conda env names, create these yourself
+export ENV_PROKKA="prokka_env"
+export ENV_PHASOMEIT="phasome_env"
+export ENV_EGGNOG="eggnog"
+
+# genome inputs
+export GENOMES_ARCHAEA_DIR="${HOME}/scratch/genomes/atb.archaea"
+export GENOMES_CONTROLS_DIR="${HOME}/project1/controls/genomes"
+export ARCHAEA_FASTA_LIST="${HOME}/scratch/genomes/archaea_fasta_list.txt"
+export CONTROLS_FASTA_LIST="${GENOMES_CONTROLS_DIR}/comparator_fasta_list.txt"
+
+# prokka output
+export PROKKA_OUT="${HOME}/scratch/prokka/all"
+export PROKKA_CTRL_OUT="${HOME}/project1/controls/prokka"
+
+# eggnog
+export EGGNOG_DIR="${HOME}/project1/eggnog"
+export EGGNOG_DB_DIR="${HOME}/project1/tools/eggnog_db"
+
+# external tools
+export PHASOMEIT_REPO="${HOME}/project1/tools/PhasomeIt"

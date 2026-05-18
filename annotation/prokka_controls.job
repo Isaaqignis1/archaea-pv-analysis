@@ -1,0 +1,35 @@
+#!/bin/bash --login
+# prokka annotation of bacterial control genomes
+#SBATCH -p multicore
+#SBATCH -n 2
+#SBATCH -t 1-0
+#SBATCH -a 1-36%36
+#SBATCH -J prokka_controls
+#SBATCH -o logs/prokka_controls_%A_%a.out
+#SBATCH -e logs/prokka_controls_%A_%a.err
+
+set -euo pipefail
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../config.sh"
+
+module purge
+module load "${CONDA_MODULE}"
+conda activate "${ENV_PROKKA}"
+
+mkdir -p "${PROKKA_CTRL_OUT}"
+
+FA=$(awk "NR==${SLURM_ARRAY_TASK_ID}" "${CONTROLS_FASTA_LIST}")
+BASE=$(basename "${FA}")
+BASE=${BASE%.fa}; BASE=${BASE%.fna}; BASE=${BASE%.fasta}
+
+if [[ -s "${PROKKA_CTRL_OUT}/${BASE}/${BASE}.gff" ]]; then
+  echo "already complete: ${BASE}"
+  exit 0
+fi
+
+prokka \
+  --outdir   "${PROKKA_CTRL_OUT}/${BASE}" \
+  --prefix   "${BASE}" \
+  --kingdom  Bacteria \
+  --compliant \
+  --cpus     "${SLURM_NTASKS}" \
+  "${GENOMES_CONTROLS_DIR}/${FA}"

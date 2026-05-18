@@ -1,0 +1,30 @@
+#!/bin/bash --login
+# eggnog-mapper on the bacterial control proteome, default tax scope
+#SBATCH -p multicore
+#SBATCH -n 1
+#SBATCH -c 16
+#SBATCH -t 36:00:00
+#SBATCH -J eggnog_bacteria
+#SBATCH -o logs/eggnog_bacteria.out
+#SBATCH -e logs/eggnog_bacteria.err
+
+set -euo pipefail
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../config.sh"
+
+source "$(conda info --base)/etc/profile.d/conda.sh"
+conda activate "${ENV_EGGNOG}"
+
+mkdir -p "${EGGNOG_DIR}/output"
+
+emapper.py \
+    -i "${EGGNOG_DIR}/input/bacteria_merged.faa" \
+    --itype proteins \
+    -m diamond \
+    --data_dir "${EGGNOG_DB_DIR}" \
+    --go_evidence non-electronic \
+    --target_orthologs all \
+    --seed_ortholog_evalue 0.001 \
+    --output_dir "${EGGNOG_DIR}/output" \
+    --output bacteria \
+    --cpu 16 \
+    --override

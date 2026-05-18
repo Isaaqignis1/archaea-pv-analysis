@@ -1,0 +1,35 @@
+#!/bin/bash --login
+# prokka annotation of archaeal genomes, one task per fasta in ARCHAEA_FASTA_LIST
+#SBATCH -p multicore
+#SBATCH -n 4
+#SBATCH -t 1-0
+#SBATCH -a 1-815%50
+#SBATCH -J prokka_archaea
+#SBATCH -o logs/prokka_archaea_%A_%a.out
+#SBATCH -e logs/prokka_archaea_%A_%a.err
+
+set -euo pipefail
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../config.sh"
+
+module purge
+module load "${CONDA_MODULE}"
+conda activate "${ENV_PROKKA}"
+
+mkdir -p "${PROKKA_OUT}"
+
+FA=$(awk "NR==${SLURM_ARRAY_TASK_ID}" "${ARCHAEA_FASTA_LIST}")
+BASE=$(basename "${FA}" .fa)
+
+
+if [[ -s "${PROKKA_OUT}/${BASE}/${BASE}.gff" ]]; then
+  echo "already complete: ${BASE}"
+  exit 0
+fi
+
+prokka \
+  --outdir   "${PROKKA_OUT}/${BASE}" \
+  --prefix   "${BASE}" \
+  --kingdom  Archaea \
+  --compliant \
+  --cpus     "${SLURM_NTASKS}" \
+  "${GENOMES_ARCHAEA_DIR}/${FA}"

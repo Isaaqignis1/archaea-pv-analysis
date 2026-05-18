@@ -1,0 +1,32 @@
+#!/bin/bash --login
+# eggnog-mapper on the archaeal proteome, tax scope restricted to Archaea (2157)
+# the restricted scope recovers arCOG cross-references for downstream locus linking
+#SBATCH -p multicore
+#SBATCH -n 2
+#SBATCH -c 16
+#SBATCH -t 72:00:00
+#SBATCH -J eggnog_archaea
+#SBATCH -o logs/eggnog_archaea.out
+#SBATCH -e logs/eggnog_archaea.err
+
+set -euo pipefail
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../config.sh"
+
+source "$(conda info --base)/etc/profile.d/conda.sh"
+conda activate "${ENV_EGGNOG}"
+
+mkdir -p "${EGGNOG_DIR}/output"
+
+emapper.py \
+    -i "${EGGNOG_DIR}/input/archaea_merged.faa" \
+    --itype proteins \
+    -m diamond \
+    --data_dir "${EGGNOG_DB_DIR}" \
+    --tax_scope Archaea \
+    --go_evidence non-electronic \
+    --target_orthologs all \
+    --seed_ortholog_evalue 0.001 \
+    --output_dir "${EGGNOG_DIR}/output" \
+    --output archaea \
+    --cpu 16 \
+    --override
